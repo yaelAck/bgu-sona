@@ -20,6 +20,7 @@
   },
   "dependencies": {
     "cheerio": "^1.0.0",
+    "dotenv": "^16.4.7",
     "fetch-cookie": "^3.1.0",
     "node-fetch": "^3.3.2",
     "twilio": "^5.4.1"
