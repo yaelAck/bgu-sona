@@ -6,7 +6,7 @@
   "main": "dist/try.mjs",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "prebuild": "npm install", 
+    "prebuild": "npm install",
     "build": "tsc",
     "start": "node dist/try.mjs",
     "dev": "node --loader ts-node/esm src/try.mts"
@@ -15,16 +15,19 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "@types/body-parser": "^1.19.5",
+    "@types/express": "^5.0.0",
     "@types/node": "^22.10.5",
     "ts-node": "^10.9.2",
     "typescript": "^5.7.3"
   },
   "dependencies": {
+    "body-parser": "^1.20.3",
     "cheerio": "^1.0.0",
     "dotenv": "^16.4.7",
+    "express": "^4.21.2",
     "fetch-cookie": "^3.1.0",
     "node-fetch": "^3.3.2",
     "twilio": "^5.4.1"
   }
 }
-

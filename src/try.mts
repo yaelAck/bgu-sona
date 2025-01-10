@@ -3,15 +3,17 @@ import fetchCookie from 'fetch-cookie';
 import * as cheerio from 'cheerio';
 import twilio from 'twilio';
 import dotenv from 'dotenv';  
+import express from 'express';
+import bodyParser from 'body-parser';
+
 dotenv.config();  // טוען את משתני הסביבה
+const app = express();
 
 const fetchWithCookies = fetchCookie(fetch);
 // הגדרת משתני סביבה
 
 const accountSid = process.env.ACCOUNT_SID;
-console.log('accountSid', accountSid)
 const authToken = process.env.AUTH_TOKEN;
-console.log('authToken', authToken)
 const client = twilio(accountSid, authToken);
 const fromWhatsAppNumber = 'whatsapp:+14155238886'; // מספר ה-WhatsApp השולח (מספר Twilio)
 const toWhatsAppNumbers = [
@@ -118,6 +120,21 @@ async function checkNewExperiments () {
   }
 };
 
+
+// app.use(bodyParser.urlencoded({ extended: false }));
+
+// app.post('/incoming-message', (req, res) => {
+//   const from = req.body.From;
+//   const body = req.body.Body;
+
+//   console.log(`הודעה התקבלה מ-${from}: ${body}`);
+
+//   // כאן תוכל להוסיף את הלוגיקה שלך לטיפול בהודעה
+
+//   // שלח תגובה ל-Twilio
+//   res.set('Content-Type', 'text/xml');
+//   res.send('<Response></Response>');
+// });
 
 // פונקציה לשליחת הודעת WhatsApp
 async function sendWhatsAppMessage(message: string) {
