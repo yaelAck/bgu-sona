@@ -6,6 +6,7 @@
   "main": "dist/try.mjs",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
+    "prebuild": "npm install", 
     "build": "tsc",
     "start": "node dist/try.mjs",
     "dev": "node --loader ts-node/esm src/try.mts"

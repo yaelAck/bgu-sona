@@ -7,8 +7,6 @@ dotenv.config();  // טוען את משתני הסביבה
 
 const fetchWithCookies = fetchCookie(fetch);
 // הגדרת משתני סביבה
-// const accountSid = "ACc3494a145fd0a86562e468252e16f7f3";
-// const authToken = "5a205ae250fc580188125c324e6e7591";
 const accountSid = process.env.ACCOUNT_SID;
 const authToken = process.env.AUTH_TOKEN;
 const client = twilio(accountSid, authToken);
