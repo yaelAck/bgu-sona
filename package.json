@@ -1,0 +1,27 @@
+{
+  "name": "my-sona",
+  "version": "1.0.0",
+  "description": "",
+  "type": "module",
+  "main": "dist/try.mjs",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "tsc",
+    "start": "node dist/try.mjs",
+    "dev": "node --loader ts-node/esm src/try.mts"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/node": "^22.10.5",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.7.3"
+  },
+  "dependencies": {
+    "cheerio": "^1.0.0",
+    "fetch-cookie": "^3.1.0",
+    "node-fetch": "^3.3.2",
+    "twilio": "^5.4.1"
+  }
+}
