@@ -9,7 +9,9 @@ const fetchWithCookies = fetchCookie(fetch);
 // הגדרת משתני סביבה
 
 const accountSid = process.env.ACCOUNT_SID;
+console.log('accountSid', accountSid)
 const authToken = process.env.AUTH_TOKEN;
+console.log('authToken', authToken)
 const client = twilio(accountSid, authToken);
 const fromWhatsAppNumber = 'whatsapp:+14155238886'; // מספר ה-WhatsApp השולח (מספר Twilio)
 const toWhatsAppNumbers = [
