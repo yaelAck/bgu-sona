@@ -19,7 +19,7 @@ const studentsInfo = [
   { name: "יעל", whatsappPhoneNumber: 'whatsapp:+972542161202', sonaLoginInfo: { userId: "324118496", password: "Sk3Ckw86" }, myExperimentsList: [] },
   { name: "שחר", whatsappPhoneNumber: 'whatsapp:+972542689591', sonaLoginInfo: defaultSonaLoginInfo, myExperimentsList: [] },
   { name: "אורי", whatsappPhoneNumber: 'whatsapp:+972509026996', sonaLoginInfo: { userId: "324179746", password: "Or556589!" }, myExperimentsList: [] },
-  { name: "אופק", whatsappPhoneNumber: 'whatsapp:+972585342355',sonaLoginInfo: defaultSonaLoginInfo, myExperimentsList: [] },
+  { name: "אופק", whatsappPhoneNumber: 'whatsapp:+972585342355', sonaLoginInfo: defaultSonaLoginInfo, myExperimentsList: [] },
 ]
 
 setInterval(fetchExperimentsForEveryone, 1000 * 30); // 30 seconds
@@ -74,10 +74,17 @@ async function checkNewExperiments(student: { name: string; whatsappPhoneNumber:
       return;
     }
 
-    // שלב 2: גישה לדף מוגן לאחר התחברות
-    const protectedPageResponse = await fetchWithCookies('https://bgupsyc.sona-systems.com/all_exp_participant.aspx', {
-      method: 'GET',
-    });
+    const now = new Date();
+    const hours = now.getHours();
+    const minutes = now.getMinutes();
+    if (hours === 22 && minutes >= 0 && minutes <= 2) {
+      await sendWhatsAppMessage(student.name, student.whatsappPhoneNumber, "יש לשלוח הודעה כדי להשאיר את הבוט מחובר");
+    }
+
+      // שלב 2: גישה לדף מוגן לאחר התחברות
+      const protectedPageResponse = await fetchWithCookies('https://bgupsyc.sona-systems.com/all_exp_participant.aspx', {
+        method: 'GET',
+      });
 
     if (!protectedPageResponse.ok) {
       console.error('שגיאה בגישה לדף המוגן:', protectedPageResponse.statusText);
@@ -90,11 +97,11 @@ async function checkNewExperiments(student: { name: string; whatsappPhoneNumber:
     const $ = cheerio.load(protectedPageHtml);
     const noStudiesMessage = $('#ctl00_ContentPlaceHolder1_lblNoStudies').text().trim();
     if (noStudiesMessage === 'No studies are available at this time.') {
-      const message = "אין ניסויים"
+      const message = "לא נמצאו ניסויים"
 
       // רישום עבורי בלוגים
-      console.log("ל", student.name, message);
-      // await sendWhatsAppMessage(student.whatsappPhoneNumber , message);
+      console.log("\n ל", student.name, message, "\n");
+      // await sendWhatsAppMessage(student.name, student.whatsappPhoneNumber , message);
     }
 
     else {
@@ -125,16 +132,20 @@ async function checkNewExperiments(student: { name: string; whatsappPhoneNumber:
         student.myExperimentsList = myCurrentExperiments;
 
         const experimentNamesString = ExperimentsToInformAbout
-          .map(experiment => "- " + experiment.experimentName)
+          .map(experiment => "• " + experiment.experimentName)
           .join('\n ');
 
         const messageSingleOrPlural = ExperimentsToInformAbout.length === 1 ? "נמצא עבורך הניסוי הבא:" : "נמצאו עבורך הניסויים הבאים:";
         const message = `היי ${student.name}, ${messageSingleOrPlural} \n ${experimentNamesString}`;
 
         // רישום עבורי בלוגים
-        console.log(ExperimentsToInformAbout.length === 1 ? "הניסוי הבא נשלח ל" : "הניסויים הבאים נשלחו ל", student.name, ":\n", ExperimentsToInformAbout)
+        console.log("\n", ExperimentsToInformAbout.length === 1 ? "הניסוי הבא נשלח ל" : "הניסויים הבאים נשלחו ל", student.name, ":\n", ExperimentsToInformAbout, "\n")
 
-        await sendWhatsAppMessage(student.whatsappPhoneNumber, message);
+        await sendWhatsAppMessage(student.name, student.whatsappPhoneNumber, message);
+      }
+      else {
+        // רישום עבורי בלוגים
+        console.log("\n נמצאו ניסויים עבור", student.name, "אך הם אינם ניסויים חדשים ולכן לא נשלחה הודעה \n")
       }
     }
 
@@ -166,14 +177,14 @@ async function checkNewExperiments(student: { name: string; whatsappPhoneNumber:
 
 
 // פונקציה לשליחת הודעת WhatsApp
-async function sendWhatsAppMessage(whatsappPhoneNumber: string, message: string) {
+async function sendWhatsAppMessage(name: string, whatsappPhoneNumber: string, message: string) {
   try {
     const messageResponse = await client.messages.create({
       body: message,
       from: fromWhatsAppNumber,
       to: whatsappPhoneNumber,
     });
-    console.log('הודעת WhatsApp נשלחה בהצלחה:', messageResponse.sid);
+    console.log('\n ל', name, 'WhatsApp נשלחה בהצלחה הודעת: \n', message, '\n מזהה הודעה: ', messageResponse.sid, "\n");
   } catch (error) {
     console.error('שגיאה בשליחת הודעת WhatsApp:', error);
   }
