@@ -2,30 +2,37 @@ import fetch from 'node-fetch';
 import fetchCookie from 'fetch-cookie';
 import * as cheerio from 'cheerio';
 import twilio from 'twilio';
-import dotenv from 'dotenv';  
-import express from 'express';
-import bodyParser from 'body-parser';
+import dotenv from 'dotenv';
 
 dotenv.config();  // טוען את משתני הסביבה
-const app = express();
 
 const fetchWithCookies = fetchCookie(fetch);
-// הגדרת משתני סביבה
 
 const accountSid = process.env.ACCOUNT_SID;
 const authToken = process.env.AUTH_TOKEN;
 const client = twilio(accountSid, authToken);
 const fromWhatsAppNumber = 'whatsapp:+14155238886'; // מספר ה-WhatsApp השולח (מספר Twilio)
-const toWhatsAppNumbers = [
-  'whatsapp:+972542161202',
-  // 'whatsapp:+972542689591',
-  // 'whatsapp:+972509026996',
-  // 'whatsapp:+972585342355',
-];
 
-setInterval(checkNewExperiments, 1000 * 5); // 5 שניות
+const defaultSonaLoginInfo = { userId: "324118496", password: "Sk3Ckw86" };
 
-async function checkNewExperiments () {
+const studentsInfo = [
+  { name: "יעל", whatsappPhoneNumber: 'whatsapp:+972542161202', sonaLoginInfo: { userId: "324118496", password: "Sk3Ckw86" }, myExperimentsList: [] },
+  { name: "שחר", whatsappPhoneNumber: 'whatsapp:+972542689591', sonaLoginInfo: defaultSonaLoginInfo, myExperimentsList: [] },
+  { name: "אורי", whatsappPhoneNumber: 'whatsapp:+972509026996', sonaLoginInfo: { userId: "324179746", password: "Or556589!" }, myExperimentsList: [] },
+  { name: "אופק", whatsappPhoneNumber: 'whatsapp:+972585342355',sonaLoginInfo: defaultSonaLoginInfo, myExperimentsList: [] },
+]
+
+setInterval(fetchExperimentsForEveryone, 1000 * 30); // 30 seconds
+
+function fetchExperimentsForEveryone() {
+  // ביצוע הבדיקות עבור כל סטודנט בנפרד
+  studentsInfo.reduce(async (promise, student) => {
+    await promise; // מחכים לסיום הפעולה הקודמת
+    return checkNewExperiments(student);
+  }, Promise.resolve());
+}
+
+async function checkNewExperiments(student: { name: string; whatsappPhoneNumber: string, sonaLoginInfo: { userId: string, password: string, }, myExperimentsList: { experimentName: string, experimentId: string }[] }) {
   const response = await fetchWithCookies('https://bgupsyc.sona-systems.com/default.aspx?logout=Y', {
     method: 'GET',
   });
@@ -36,8 +43,6 @@ async function checkNewExperiments () {
   }
 
   const html = await response.text();
-
-
   const $ = cheerio.load(html);
   const viewState = $('#__VIEWSTATE').val();
   const eventValidation = $('#__EVENTVALIDATION').val();
@@ -48,7 +53,6 @@ async function checkNewExperiments () {
   }
 
 
-
   try {
     // שלב 1: התחברות לאתר
     const loginResponse = await fetchWithCookies('https://bgupsyc.sona-systems.com/default.aspx?logout=Y', {
@@ -57,10 +61,8 @@ async function checkNewExperiments () {
         'Content-Type': 'application/x-www-form-urlencoded',
       },
       body: new URLSearchParams({
-        'ctl00$ContentPlaceHolder1$userid': '324118496', // הכנס את שם המשתמש שלך
-        'ctl00$ContentPlaceHolder1$pw': 'Sk3Ckw86',      // הכנס את הסיסמה שלך
-        // 'ctl00$ContentPlaceHolder1$userid': '324179746', // הכנס את שם המשתמש שלך
-        // 'ctl00$ContentPlaceHolder1$pw': 'Or556589!',      // הכנס את הסיסמה שלך
+        'ctl00$ContentPlaceHolder1$userid': student.sonaLoginInfo.userId, // הכנס את שם המשתמש שלך
+        'ctl00$ContentPlaceHolder1$pw': student.sonaLoginInfo.password,      // הכנס את הסיסמה שלך
         '__VIEWSTATE': String(viewState ?? ''), // המרת viewState למחרוזת
         '__EVENTVALIDATION': String(eventValidation ?? ''), // המרת eventValidation למחרוזת
         'ctl00$ContentPlaceHolder1$default_auth_button': 'Log In',
@@ -89,31 +91,73 @@ async function checkNewExperiments () {
     const noStudiesMessage = $('#ctl00_ContentPlaceHolder1_lblNoStudies').text().trim();
     if (noStudiesMessage === 'No studies are available at this time.') {
       const message = "אין ניסויים"
-      console.log(message);
-      await sendWhatsAppMessage(message);
 
+      // רישום עבורי בלוגים
+      console.log("ל", student.name, message);
+      // await sendWhatsAppMessage(student.whatsappPhoneNumber , message);
     }
+
     else {
-      console.log('יש ניסויים');
+      const myCurrentExperiments: { experimentName: string, experimentId: string }[] = [];
+      $('tr[id^="ctl00_ContentPlaceHolder1_repStudentStudies_"]').each((index, element) => {
+        const experimentName = $(element).find('a[id$="HyperlinkStudentStudyInfo"]').text().trim();
+        const href = $(element).find('a[id$="HyperlinkStudentStudyInfo"]').attr('href');
+        const experimentId = href ? new URLSearchParams(href.split('?')[1]).get('experiment_id') : null;
 
-      //   // שלב 4: חילוץ רשימת הניסויים
-      //   const studies = [];
-      //   $('tbody tr').each((index, element) => {
-      //     const studyName = $(element).find('td').first().text().trim();
-      //     if (studyName) {
-      //       studies.push(studyName);
-      //     }
-      //   });
+        if (experimentName && experimentId) {
+          myCurrentExperiments.push({
+            experimentName,
+            experimentId,
+          });
+        }
+      });
 
-      //   if (studies.length > 0) {
-      //     console.log('רשימת הניסויים:');
-      //     studies.forEach((study, index) => {
-      //       console.log(`${index + 1}. ${study}`);
-      //     });
-      //   } else {
-      //     console.log('לא נמצאו ניסויים');
-      //   }
+      const ExperimentsToInformAbout = myCurrentExperiments.filter(
+        (currentExperiment) =>
+          !student.myExperimentsList.some(
+            (studentExperiment) =>
+              studentExperiment.experimentId === currentExperiment.experimentId
+          )
+      );
+
+      if (ExperimentsToInformAbout.length > 0) {
+
+        student.myExperimentsList = myCurrentExperiments;
+
+        const experimentNamesString = ExperimentsToInformAbout
+          .map(experiment => "- " + experiment.experimentName)
+          .join('\n ');
+
+        const messageSingleOrPlural = ExperimentsToInformAbout.length === 1 ? "נמצא עבורך הניסוי הבא:" : "נמצאו עבורך הניסויים הבאים:";
+        const message = `היי ${student.name}, ${messageSingleOrPlural} \n ${experimentNamesString}`;
+
+        // רישום עבורי בלוגים
+        console.log(ExperimentsToInformAbout.length === 1 ? "הניסוי הבא נשלח ל" : "הניסויים הבאים נשלחו ל", student.name, ":\n", ExperimentsToInformAbout)
+
+        await sendWhatsAppMessage(student.whatsappPhoneNumber, message);
+      }
     }
+
+    // logout
+    await fetchWithCookies('https://bgupsyc.sona-systems.com/default.aspx?logout=Y', {
+      method: 'GET',
+      headers: {
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
+        'Accept-Encoding': 'gzip, deflate, br, zstd',
+        'Accept-Language': 'he,en-US;q=0.9,en;q=0.8,fr;q=0.7,da;q=0.6',
+        'User-Agent': 'Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Mobile Safari/537.36',
+        'Cookie': 'language_pref=EN; ARRAffinity=21a5192a74952511370c7b42f1bc64db6b7a8e31226970bf5b21e0d8505907e7; ARRAffinitySameSite=21a5192a74952511370c7b42f1bc64db6b7a8e31226970bf5b21e0d8505907e7; ASP.NET_SessionId=nht1vggeoawm0tsborcx1ufp; cookie_ck=Y; cookieconsent_status=dismiss; WEBHOME=B3A5B5C7B9A6AC54C0D487F385D91BBFAC74730AC72DDCAACCD6F12159C58E1E9B09210E4A1DD0FAD8AC4EBCA0A7BBB40DB074B10C8302877D15664B152F414999E2946586278D818F43926EF7089EE79634250CDA09B1C33567EC7DA15016D1',
+        'Referer': 'https://bgupsyc.sona-systems.com/all_exp_participant.aspx',
+        'Sec-CH-UA': '"Google Chrome";v="131", "Chromium";v="131", "Not_A Brand";v="24"',
+        'Sec-CH-UA-Mobile': '?1',
+        'Sec-CH-UA-Platform': '"Android"',
+        'Sec-Fetch-Dest': 'document',
+        'Sec-Fetch-Mode': 'navigate',
+        'Sec-Fetch-Site': 'same-origin',
+        'Sec-Fetch-User': '?1',
+        'Upgrade-Insecure-Requests': '1',
+      },
+    });
 
   } catch (error) {
     console.error('אירעה שגיאה:', error);
@@ -121,33 +165,16 @@ async function checkNewExperiments () {
 };
 
 
-// app.use(bodyParser.urlencoded({ extended: false }));
-
-// app.post('/incoming-message', (req, res) => {
-//   const from = req.body.From;
-//   const body = req.body.Body;
-
-//   console.log(`הודעה התקבלה מ-${from}: ${body}`);
-
-//   // כאן תוכל להוסיף את הלוגיקה שלך לטיפול בהודעה
-
-//   // שלח תגובה ל-Twilio
-//   res.set('Content-Type', 'text/xml');
-//   res.send('<Response></Response>');
-// });
-
 // פונקציה לשליחת הודעת WhatsApp
-async function sendWhatsAppMessage(message: string) {
-  toWhatsAppNumbers.forEach(async (toWhatsAppNumber) => {
-    try {
-      const messageResponse = await client.messages.create({
-        body: message,
-        from: fromWhatsAppNumber,
-        to: toWhatsAppNumber,
-      });
-      console.log('הודעת WhatsApp נשלחה בהצלחה:', messageResponse.sid);
-    } catch (error) {
-      console.error('שגיאה בשליחת הודעת WhatsApp:', error);
-    }
-  })
+async function sendWhatsAppMessage(whatsappPhoneNumber: string, message: string) {
+  try {
+    const messageResponse = await client.messages.create({
+      body: message,
+      from: fromWhatsAppNumber,
+      to: whatsappPhoneNumber,
+    });
+    console.log('הודעת WhatsApp נשלחה בהצלחה:', messageResponse.sid);
+  } catch (error) {
+    console.error('שגיאה בשליחת הודעת WhatsApp:', error);
+  }
 }
