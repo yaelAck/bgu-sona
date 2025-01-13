@@ -13,7 +13,7 @@ const authToken = process.env.AUTH_TOKEN;
 const client = twilio(accountSid, authToken);
 const fromWhatsAppNumber = 'whatsapp:+14155238886'; // מספר ה-WhatsApp השולח (מספר Twilio)
 
-const defaultSonaLoginInfo = { userId: "324118496", password: "Sk3Ckw86" };
+const defaultSonaLoginInfo = { userId: "324179746", password: "Or556589!" };
 
 const studentsInfo = [
   { name: "יעל", whatsappPhoneNumber: 'whatsapp:+972542161202', sonaLoginInfo: { userId: "324118496", password: "Sk3Ckw86" }, myExperimentsList: [] },
@@ -22,15 +22,27 @@ const studentsInfo = [
   { name: "אופק", whatsappPhoneNumber: 'whatsapp:+972585342355', sonaLoginInfo: defaultSonaLoginInfo, myExperimentsList: [] },
 ]
 
-setInterval(fetchExperimentsForEveryone, 1000 * 30); // 30 seconds
+
+setInterval(fetchExperimentsForEveryone, 1000 * 15); // 30 seconds
 
 function fetchExperimentsForEveryone() {
+
   // ביצוע הבדיקות עבור כל סטודנט בנפרד
   studentsInfo.reduce(async (promise, student) => {
+    const canGetMessages = await doesUserCanGetMessages(student.whatsappPhoneNumber, student.name);
     await promise; // מחכים לסיום הפעולה הקודמת
-    return checkNewExperiments(student);
+
+    if (canGetMessages) {
+      console.log("\n ניתן לשלוח הודעות ל", student.name, "ולכן עוברים לבדיקת ניסויים חדשים \n");
+      await promise; // מחכים לסיום הפעולה הקודמת
+      return checkNewExperiments(student);
+    }
+    else {
+      console.log("\n לא ניתן לשלוח הודעות ל", student.name, "ולכן לא עברנו לשלב בדיקת ניסויים חדשים \n");
+    }
   }, Promise.resolve());
 }
+
 
 async function checkNewExperiments(student: { name: string; whatsappPhoneNumber: string, sonaLoginInfo: { userId: string, password: string, }, myExperimentsList: { experimentName: string, experimentId: string }[] }) {
   const response = await fetchWithCookies('https://bgupsyc.sona-systems.com/default.aspx?logout=Y', {
@@ -51,7 +63,6 @@ async function checkNewExperiments(student: { name: string; whatsappPhoneNumber:
     console.error('לא נמצאו הערכים הדרושים.');
     return;
   }
-
 
   try {
     // שלב 1: התחברות לאתר
@@ -74,17 +85,10 @@ async function checkNewExperiments(student: { name: string; whatsappPhoneNumber:
       return;
     }
 
-    const now = new Date();
-    const hours = now.getHours();
-    const minutes = now.getMinutes();
-    if (hours === 22 && minutes >= 0 && minutes <= 2) {
-      await sendWhatsAppMessage(student.name, student.whatsappPhoneNumber, "יש לשלוח הודעה כדי להשאיר את הבוט מחובר");
-    }
-
-      // שלב 2: גישה לדף מוגן לאחר התחברות
-      const protectedPageResponse = await fetchWithCookies('https://bgupsyc.sona-systems.com/all_exp_participant.aspx', {
-        method: 'GET',
-      });
+    // שלב 2: גישה לדף מוגן לאחר התחברות
+    const protectedPageResponse = await fetchWithCookies('https://bgupsyc.sona-systems.com/all_exp_participant.aspx', {
+      method: 'GET',
+    });
 
     if (!protectedPageResponse.ok) {
       console.error('שגיאה בגישה לדף המוגן:', protectedPageResponse.statusText);
@@ -97,11 +101,9 @@ async function checkNewExperiments(student: { name: string; whatsappPhoneNumber:
     const $ = cheerio.load(protectedPageHtml);
     const noStudiesMessage = $('#ctl00_ContentPlaceHolder1_lblNoStudies').text().trim();
     if (noStudiesMessage === 'No studies are available at this time.') {
-      const message = "לא נמצאו ניסויים"
-
+      const message = "לא נמצאו ניסויים עבור"
       // רישום עבורי בלוגים
-      console.log("\n ל", student.name, message, "\n");
-      // await sendWhatsAppMessage(student.name, student.whatsappPhoneNumber , message);
+      console.log("\n", message, student.name, "\n");
     }
 
     else {
@@ -187,5 +189,38 @@ async function sendWhatsAppMessage(name: string, whatsappPhoneNumber: string, me
     console.log('\n ל', name, 'WhatsApp נשלחה בהצלחה הודעת: \n', message, '\n מזהה הודעה: ', messageResponse.sid, "\n");
   } catch (error) {
     console.error('שגיאה בשליחת הודעת WhatsApp:', error);
+  }
+}
+
+
+async function doesUserCanGetMessages(whatsappPhoneNumber: string, studentName: string) {
+  const now = new Date();
+  console.log('now', now)
+  try {
+    const messages = await client.messages.list({
+      to: fromWhatsAppNumber,
+      from: whatsappPhoneNumber,
+      limit: 1, // חיפוש רק בהודעה האחרונה
+    });
+
+    // אם התקבלה הודעה ב-24 השעות האחרונות- תחזיר לי true
+    if (messages.length > 0) {
+      const lastMessageTime = new Date(messages[0].dateSent); // הזמן שההודעה נשלחה
+      const timeDifferenceInMs = now.getTime() - lastMessageTime.getTime();
+      const timeDifferenceInHours = timeDifferenceInMs / (1000 * 60 * 60);
+      if (timeDifferenceInHours < 24) {
+        if (timeDifferenceInHours > 23.9 && timeDifferenceInHours < 23.9167) { // עברו יותר מ 23:54 דקות ופחות מ 23:55 דקות מהפעם האחרונה שהתקבלה הודעה
+          await sendWhatsAppMessage(studentName, whatsappPhoneNumber, `היי ${studentName}, יש לשלוח הודעה על מנת להמשיך לאפשר לבוט לעדכן אותך בניסויים חדשים ב-24 השעות הקרובות. תוכן ההודעה שתשלח אינו משנה`);
+        }
+        return true
+      }
+      else return false;
+    } else {
+      console.log('לא התקבלו הודעות מהמספר הזה.');
+      return false;
+    }
+  } catch (error) {
+    console.error('שגיאה בשליפת הודעות:', error);
+    return false;
   }
 }
