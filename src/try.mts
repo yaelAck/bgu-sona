@@ -195,7 +195,6 @@ async function sendWhatsAppMessage(name: string, whatsappPhoneNumber: string, me
 
 async function doesUserCanGetMessages(whatsappPhoneNumber: string, studentName: string) {
   const now = new Date();
-  console.log('now', now)
   try {
     const messages = await client.messages.list({
       to: fromWhatsAppNumber,
