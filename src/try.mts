@@ -124,6 +124,7 @@ async function checkNewExperiments(student: Student) {
 
       const ExperimentsToInformAbout = myCurrentExperiments.filter(
         (currentExperiment) =>
+          currentExperiment.experimentId !== '3916' && // the 'EGG males only experiment'
           !student.myExperimentsList.some(
             (studentExperiment) =>
               studentExperiment.experimentId === currentExperiment.experimentId
@@ -226,7 +227,7 @@ async function doesUserCanGetMessages(student: Student) {
             else moreThan5HoursSinceLastRemindMsg = false;
           }
           if (!student.lastReminderMessageTime || moreThan5HoursSinceLastRemindMsg) { // עברו יותר מ-5 שעות מאז הודעת התזכורת האחרונה
-            await sendWhatsAppMessage(student.name, student.whatsappPhoneNumber, `היי ${student.name}, יש לשלוח הודעה על מנת להמשיך לאפשר לבוט לעדכן אותך בניסויים חדשים ב-24 השעות הקרובות. תוכן ההודעה שתשלח אינו משנה`);
+            await sendWhatsAppMessage(student.name, student.whatsappPhoneNumber, `היי ${student.name}, יש לשלוח הודעה על מנת להמשיך לאפשר לבוט לעדכן אותך בניסויים חדשים ב-24 השעות הקרובות. תוכן ההודעה שתשלחי אינו משנה`);
             student.lastReminderMessageTime = new Date();
           }
         }
