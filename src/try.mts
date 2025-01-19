@@ -260,7 +260,7 @@ async function getMessageStatusBySid(sid: string) {
 function scheduleDailyTask() {
   const now = new Date();
   const nextTime = new Date();
-  nextTime.setHours(19);
+  nextTime.setHours(17); // זה למעשה 19 בזמן ישראל
   nextTime.setMinutes(0);
   nextTime.setSeconds(0);
 
@@ -268,7 +268,7 @@ function scheduleDailyTask() {
   const timeToNextRun = nextTime.getTime() - now.getTime(); // זמן עד ההפעלה הבאה במילישניות
 
   setTimeout(async () => {
-    await sendWhatsAppMessage("יעל", 'whatsapp:+972542161202', "היי יעלי, זוהי תזכורת להאכיל את המחחמצת ולקחת תרופות");
+    await sendWhatsAppMessage("יעל", 'whatsapp:+972542161202', "היי יעלי, זוהי תזכורת להאכיל את המחמצת ולקחת תרופות");
 
     setInterval(async () => {
       await sendWhatsAppMessage("יעל", 'whatsapp:+972542161202', "היי יעלי, זוהי תזכורת להאכיל את המחמצת ולקחת תרופות"); // לאחר הפעלה ראשונה, הפעלה כל 24 שעות
