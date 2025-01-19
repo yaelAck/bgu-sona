@@ -134,22 +134,22 @@ async function checkNewExperiments(student: Student) {
       if (ExperimentsToInformAbout.length > 0) {
 
         const experimentNamesString = ExperimentsToInformAbout
-        .map(experiment => "• " + experiment.experimentName)
-        .join('\n ');
-        
+          .map(experiment => "• " + experiment.experimentName)
+          .join('\n ');
+
         const messageSingleOrPlural = ExperimentsToInformAbout.length === 1 ? "נמצא עבורך הניסוי הבא:" : "נמצאו עבורך הניסויים הבאים:";
         const message = `היי ${student.name}, ${messageSingleOrPlural} \n ${experimentNamesString}`;
-        
+
         // רישום עבורי בלוגים
         console.log("\n", ExperimentsToInformAbout.length === 1 ? "הניסוי הבא נמצא עבור" : "הניסויים הבאים נמצאו עבור", student.name, ":\n", ExperimentsToInformAbout)
-        
+
         const messageSid = await sendWhatsAppMessage(student.name, student.whatsappPhoneNumber, message);
-        
+
         // עדכון הניסויים שנשלחו ליוזר ב student.myExperimentsList רק אם ההודעה נשלחה אליו 
-        if (messageSid){
+        if (messageSid) {
           await new Promise((resolve) => setTimeout(resolve, 1000));
           const messageStatus = await getMessageStatusBySid(messageSid)
-          if (messageStatus === "sent"){
+          if (messageStatus === "sent") {
             student.myExperimentsList = myCurrentExperiments;
           }
         }
@@ -218,7 +218,7 @@ async function doesUserCanGetMessages(student: Student) {
       const timeDifferenceInMs = now.getTime() - lastMessageTime.getTime();
       const timeDifferenceInHours = timeDifferenceInMs / (1000 * 60 * 60);
       if (timeDifferenceInHours < 24) {
-        if (timeDifferenceInHours > 23.9){ // עברו יותר מ 23:54 דקות מהפעם האחרונה שהתקבלה הודעה
+        if (timeDifferenceInHours > 23.9) { // עברו יותר מ 23:54 דקות מהפעם האחרונה שהתקבלה הודעה
           let moreThan5HoursSinceLastRemindMsg = false;
           if (student.lastReminderMessageTime) {
             const lastReminderMessageTimeDifferenceInMs = now.getTime() - student.lastReminderMessageTime?.getTime();
@@ -253,3 +253,27 @@ async function getMessageStatusBySid(sid: string) {
     return null;
   }
 }
+
+
+
+// ליעל
+function scheduleDailyTask() {
+  const now = new Date();
+  const nextTime = new Date();
+  nextTime.setHours(19);
+  nextTime.setMinutes(0);
+  nextTime.setSeconds(0);
+
+  if (nextTime <= now) nextTime.setDate(nextTime.getDate() + 1); // אם השעה כבר עברה היום, נקבע אותה למחר
+  const timeToNextRun = nextTime.getTime() - now.getTime(); // זמן עד ההפעלה הבאה במילישניות
+
+  setTimeout(async () => {
+    await sendWhatsAppMessage("יעל", 'whatsapp:+972542161202', "היי יעלי, זוהי תזכורת להאכיל את המחחמצת ולקחת תרופות");
+
+    setInterval(async () => {
+      await sendWhatsAppMessage("יעל", 'whatsapp:+972542161202', "היי יעלי, זוהי תזכורת להאכיל את המחמצת ולקחת תרופות"); // לאחר הפעלה ראשונה, הפעלה כל 24 שעות
+    }, 1000 * 60 * 60 * 24);
+  }, timeToNextRun);
+}
+
+scheduleDailyTask();
