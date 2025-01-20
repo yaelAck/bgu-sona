@@ -21,6 +21,7 @@ const studentsInfo: Student[] = [
   { name: "שחר", whatsappPhoneNumber: 'whatsapp:+972542689591', sonaLoginInfo: defaultSonaLoginInfo, myExperimentsList: [], lastReminderMessageTime: undefined },
   { name: "אורי", whatsappPhoneNumber: 'whatsapp:+972509026996', sonaLoginInfo: { userId: "324179746", password: "Or556589!" }, myExperimentsList: [], lastReminderMessageTime: undefined },
   { name: "אופק", whatsappPhoneNumber: 'whatsapp:+972585342355', sonaLoginInfo: defaultSonaLoginInfo, myExperimentsList: [], lastReminderMessageTime: undefined },
+  { name: "מיכל", whatsappPhoneNumber: 'whatsapp:+972584441018', sonaLoginInfo: defaultSonaLoginInfo, myExperimentsList: [], lastReminderMessageTime: undefined },
 ]
 
 
