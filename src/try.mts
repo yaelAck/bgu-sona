@@ -151,7 +151,11 @@ async function checkNewExperiments(student: Student) {
           await new Promise((resolve) => setTimeout(resolve, 1000));
           const messageStatus = await getMessageStatusBySid(messageSid)
           if (messageStatus === "sent") {
+            console.log('\n ל', student.name, 'WhatsApp נשלחה בהצלחה הודעת: \n', message, '\n מזהה הודעה: ', messageSid);
             student.myExperimentsList = myCurrentExperiments;
+          }
+          else {
+            console.log("אירעה שגיאה בשליחת ההודעה ל", student.name, ". סטטוס השליחה: ", messageStatus );
           }
         }
       }
@@ -196,7 +200,6 @@ async function sendWhatsAppMessage(name: string, whatsappPhoneNumber: string, me
       from: fromWhatsAppNumber,
       to: whatsappPhoneNumber,
     });
-    console.log('\n ל', name, 'WhatsApp נשלחה בהצלחה הודעת: \n', message, '\n מזהה הודעה: ', messageResponse.sid);
     return messageResponse.sid;
   } catch (error) {
     console.error('\n שגיאה בשליחת הודעת WhatsApp:', error);
