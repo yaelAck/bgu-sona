@@ -17,7 +17,7 @@ const defaultSonaLoginInfo = { userId: "324179746", password: "Or556589!" };
 interface Student { name: string, whatsappPhoneNumber: string, sonaLoginInfo: { userId: string, password: string, }, myExperimentsList: { experimentName: string, experimentId: string }[], lastReminderMessageTime: Date | undefined };
 
 const studentsInfo: Student[] = [
-  { name: "יעל", whatsappPhoneNumber: 'whatsapp:+972542161202', sonaLoginInfo: { userId: "324118496", password: "Sk3Ckw86" }, myExperimentsList: [], lastReminderMessageTime: undefined },
+  // { name: "יעל", whatsappPhoneNumber: 'whatsapp:+972542161202', sonaLoginInfo: { userId: "324118496", password: "Sk3Ckw86" }, myExperimentsList: [], lastReminderMessageTime: undefined },
   { name: "שחר", whatsappPhoneNumber: 'whatsapp:+972542689591', sonaLoginInfo: defaultSonaLoginInfo, myExperimentsList: [], lastReminderMessageTime: undefined },
   { name: "אורי", whatsappPhoneNumber: 'whatsapp:+972509026996', sonaLoginInfo: { userId: "324179746", password: "Or556589!" }, myExperimentsList: [], lastReminderMessageTime: undefined },
   { name: "אופק", whatsappPhoneNumber: 'whatsapp:+972585342355', sonaLoginInfo: defaultSonaLoginInfo, myExperimentsList: [], lastReminderMessageTime: undefined },
